@@ -2,41 +2,41 @@ import string
 import operator
 import re
 from file import File
-from encode import shift
+from cesar import shift, cesar
 
 def decode_cesar(file):
     alphabet = ['а', 'б', 'в', 'г', 'д', 'е', 'ж', 'з', 'и', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 
                 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ь', 'ы', 'ъ', 'э', 'ю', 'я']
     f = File('/home/klenlen/уМИРЭАй/7_семестр/Инф.Без./ciper_Cesar/tolstoi_l_n__voina_i_mir.txt')
     f.open_file()
+
+    # Сздается эталонная таблица частоты встречаемости букв
     w_and_p_freq = frequency_analysis(alphabet, f.text)
+
+    # Сздается таблица частоты встречаемости зашифрованных букв
     encode_text_freq = frequency_analysis(alphabet, file.text)
+
+    # Замена букв по таблицам
     sub_decode_text = substitution(alphabet, w_and_p_freq, encode_text_freq, file.text)
     print(sub_decode_text)
+
+    # Словарь совпавших букв
     good_letters = coincidence(sub_decode_text, file.text)
+
+    # Поиск нужного сдвига
     step = steper(good_letters, alphabet)
     print(f'\nсдвиг на {step}\n')
-    decode_alph = shift(alphabet, step)
-    file.write_to_file(text_shift_back(alphabet, decode_alph, file.text))
 
-def text_shift_back(alph, decode, txt):
-    text = ''
-    for letter in txt:
-        try:
-            if letter.isupper():
-                id = decode[alph.index(letter.lower())].upper()
-            else:
-                id = decode[alph.index(letter)]
-            text += id
-        except ValueError:
-            text += letter
-    return text
+
+    decode_alph = shift(alphabet, step)
+    file.write_to_file(cesar(alphabet, decode_alph, file.text))
 
 def steper(letters, alphabet):
+    """Ищет ключ по алфавиту в зависимости от растояния между совпавшими буквами"""
+
     l = []
     for k, v in letters.items():
         shift = 0
-        # print(k,v)
         for let in alphabet:
             if k == let:
                 shift = 1
@@ -59,8 +59,9 @@ def steper(letters, alphabet):
             sh = key
     return sh
 
-
 def coincidence(txt_1, txt_3):
+    """Проверяет совпадение между двумя текстами"""
+
     f2 = File('/home/klenlen/уМИРЭАй/7_семестр/Инф.Без./ciper_Cesar/copy.txt')
     f2.open_file()
     txt_2 = f2.text
@@ -77,6 +78,8 @@ def coincidence(txt_1, txt_3):
     return coinc_let
 
 def substitution(alpha, base, encode, text):
+    """Заменяет буквы в зашиврованном тексте относительно эталонной таблице частоты букв и таблицы зашиврованного текста"""
+
     txt = ''
     for letter in text:
         if letter in alpha:
@@ -92,23 +95,14 @@ def substitution(alpha, base, encode, text):
     return txt
 
 def frequency_analysis(alphabet, text):
+    """Возвращет список пар (буква: частота встречаемости в тексте)"""
+
     frequency = {}
     for letter in alphabet:
         counter = len(re.findall(letter, text))
         frequency.update({letter: counter/len(text)})
     # [print(c) for c in sorted(frequency.items(), key=operator.itemgetter(1))]
     return sorted(frequency.items(), key=operator.itemgetter(1))
-
-def clean_text(text):
-    text = text.lower()
-    spec_chars = string.punctuation + '\n\xa0«»\t—…'
-    text = remove_chars_from_text(text, spec_chars)
-    text = remove_chars_from_text(text, string.digits)
-    text = re.sub('[a-z]\s', '', text)
-    return text
-
-def remove_chars_from_text(text, chars):
-    return ''.join([ch for ch in text if ch not in chars])
 
 if __name__ == '__main__':
     f = File('/home/klenlen/уМИРЭАй/7_семестр/Инф.Без./ciper_Cesar/file.txt')
